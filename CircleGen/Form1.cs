@@ -17,34 +17,67 @@ namespace CircleGen
         public Random random = new Random();
         int new_number = 0;
         public List<int> randomList = new List<int>();
+        public List<int> listY = new List<int>();
+        public List<int> listX = new List<int>();
         private void Form1_Load(object sender, EventArgs e)
         {
             //размер полотна
             int width = 800, height = width;
             //количество кругов
-            int circles_amount = 100;
+            int circles_amount = 200;
             //радиус кругов
-            int radius = random.Next(10, 30);
+            int diameter = random.Next(10, 40);
+            //количество картинок для генерации
+            int picNum = 20;
             
-            Bitmap bitmap = new Bitmap(width, height);
-            //генерация кругов
-            for (int ii = 0; ii < circles_amount; ii++)
+            //генерация картинок
+            for (int i = 0; i < picNum; i++)
             {
-                using (Graphics gr = Graphics.FromImage(bitmap))
+                Bitmap bitmap = new Bitmap(width, height);
+                //генерация кругов
+                for (int ii = 0; ii < circles_amount; ii++)
+                {
+                    using (Graphics gr = Graphics.FromImage(bitmap))
                     {
-                        int randX = NewRandomNumber(width, radius) == 0 ? NewRandomNumber(width, radius) : new_number; 
-                        int randY = NewRandomNumber(width, radius) == 0 ? NewRandomNumber(width, radius) : new_number;
-                        gr.FillEllipse(Brushes.Black,  randX, randY, radius, radius);
+                        int randX = NewRandomNumber(width, diameter) == 0 ? NewRandomNumber(width, diameter) : new_number;
+                        int randY = NewRandomNumber(width, diameter) == 0 ? NewRandomNumber(width, diameter) : new_number;
+                        if (CheckOverlap(diameter, randX, randY))
+                        {
+                            gr.FillEllipse(Brushes.Black, randX, randY, diameter, diameter);
+                        }
                     }
+                }
+                SaveExt.Image(bitmap);
+                listX.Clear();
+                listY.Clear();
+                randomList.Clear();
             }
-
-            SaveExt.Image(bitmap);
             Close();
         }
-
-        int NewRandomNumber(int bound, int radius)
+        
+        bool CheckOverlap(int diameter, int randX, int randY)
         {
-            new_number = random.Next(0, bound - radius);
+            for (int i = 0; i < listX.Count; i++)
+            {
+                int otherX = listX[i];
+                int otherY = listY[i];
+                Rectangle rect1 = new Rectangle(randX, randY, diameter, diameter);
+                Rectangle rect2 = new Rectangle(otherX, otherY, diameter, diameter);
+
+                if (rect1.IntersectsWith(rect2))
+                {
+                    return false;
+                }
+            }
+            listX.Add(randX);
+            listY.Add(randY);
+            return true;
+        }
+
+        int NewRandomNumber(int bound, int diameter)
+        {
+            new_number = random.Next(0, bound - diameter);
+
             if (!randomList.Contains(new_number))
             {
                 randomList.Add(new_number);
@@ -58,15 +91,23 @@ namespace CircleGen
     {
         public static void Image(Bitmap bitmap)
         {
-            string desktop = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}";
+            string desktop = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Выборка";
             int i = 0, filenum = 0;
             do
             {
-                filenum = i + 1;
+                filenum += 1;
                 i++;
             } while (File.Exists(@$"{desktop}\{i}.png"));
 
-            bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
+            if (Directory.Exists(desktop) == false)
+            {
+                Directory.CreateDirectory(desktop);
+                bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
+            }
+            else
+            {
+                bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
+            }
         }
     }
 }
