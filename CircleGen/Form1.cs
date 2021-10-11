@@ -27,11 +27,11 @@ namespace CircleGen
 			const int width = 800;
 			const int height = width;
 			//количество кругов
-			const int circlesAmount = 200;
+			const int circlesAmount = 300;
 			//радиус кругов
 			var diameter = random.Next(10, 40);
 			//количество картинок для генерации
-			const int picNum = 1;
+			const int picNum = 10;
 
 			//генерация картинок
 			for (var i = 0; i < picNum; i++)
@@ -41,13 +41,9 @@ namespace CircleGen
 				for (var ii = 0; ii < circlesAmount; ii++)
 				{
 					using var gr = Graphics.FromImage(bitmap);
-					var randX = NewRandomNumber(width, diameter) == 0
-						? NewRandomNumber(width, diameter)
-						: newNumber;
-					var randY = NewRandomNumber(width, diameter) == 0
-						? NewRandomNumber(width, diameter)
-						: newNumber;
-					if (CheckOverlap(diameter, randX, randY))
+					var randX = NewRandomNumber(width, diameter);
+					var randY = NewRandomNumber(width, diameter);
+					if (!CheckOverlap(diameter, randX, randY))
 						gr.FillEllipse(Brushes.Black, randX, randY, diameter, diameter);
 				}
 
@@ -69,12 +65,12 @@ namespace CircleGen
 				var rect1 = new Rectangle(randX, randY, diameter, diameter);
 				var rect2 = new Rectangle(otherX, otherY, diameter, diameter);
 
-				if (rect1.IntersectsWith(rect2)) return false;
+				if (rect1.IntersectsWith(rect2)) return true;
 			}
 
 			listX.Add(randX);
 			listY.Add(randY);
-			return true;
+			return false;
 		}
 
 		private int NewRandomNumber(int bound, int diameter)
@@ -95,7 +91,7 @@ namespace CircleGen
 	public static class SaveExt
 	{
 		// очищать предыдущие сгенерированные круги
-		private const bool ClearDirectory = true;
+		private static bool clearDirectory = true;
 
 		public static void Image(Bitmap bitmap)
 		{
@@ -103,11 +99,12 @@ namespace CircleGen
 			var filenum = 1;
 			while (File.Exists(@$"{desktop}\{filenum}.png"))
 			{
-				if (ClearDirectory) File.Delete(@$"{desktop}\{filenum}.png");
+				if (clearDirectory) File.Delete(@$"{desktop}\{filenum}.png");
 				filenum++;
 			}
 
-			if (ClearDirectory) filenum = 1;
+			if (clearDirectory) filenum = 1;
+			clearDirectory = false;
 			if (!Directory.Exists(desktop)) Directory.CreateDirectory(desktop);
 			bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
 		}
