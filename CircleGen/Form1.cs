@@ -7,107 +7,109 @@ using System.Windows.Forms;
 
 namespace CircleGen
 {
-    public partial class Form1 : Form
-    {
-        public Form1()
-        {
-            InitializeComponent();
-        }
-        
-        public Random random = new Random();
-        int new_number = 0;
-        public List<int> randomList = new List<int>();
-        public List<int> listY = new List<int>();
-        public List<int> listX = new List<int>();
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            //размер полотна
-            int width = 800, height = width;
-            //количество кругов
-            int circles_amount = 200;
-            //радиус кругов
-            int diameter = random.Next(10, 40);
-            //количество картинок для генерации
-            int picNum = 20;
-            
-            //генерация картинок
-            for (int i = 0; i < picNum; i++)
-            {
-                Bitmap bitmap = new Bitmap(width, height);
-                //генерация кругов
-                for (int ii = 0; ii < circles_amount; ii++)
-                {
-                    using (Graphics gr = Graphics.FromImage(bitmap))
-                    {
-                        int randX = NewRandomNumber(width, diameter) == 0 ? NewRandomNumber(width, diameter) : new_number;
-                        int randY = NewRandomNumber(width, diameter) == 0 ? NewRandomNumber(width, diameter) : new_number;
-                        if (CheckOverlap(diameter, randX, randY))
-                        {
-                            gr.FillEllipse(Brushes.Black, randX, randY, diameter, diameter);
-                        }
-                    }
-                }
-                SaveExt.Image(bitmap);
-                listX.Clear();
-                listY.Clear();
-                randomList.Clear();
-            }
-            Close();
-        }
-        
-        bool CheckOverlap(int diameter, int randX, int randY)
-        {
-            for (int i = 0; i < listX.Count; i++)
-            {
-                int otherX = listX[i];
-                int otherY = listY[i];
-                Rectangle rect1 = new Rectangle(randX, randY, diameter, diameter);
-                Rectangle rect2 = new Rectangle(otherX, otherY, diameter, diameter);
+	public partial class Form1 : Form
+	{
+		private readonly List<int> listX = new();
+		private readonly List<int> listY = new();
+		private int newNumber;
 
-                if (rect1.IntersectsWith(rect2))
-                {
-                    return false;
-                }
-            }
-            listX.Add(randX);
-            listY.Add(randY);
-            return true;
-        }
+		private readonly Random random = new();
+		private readonly List<int> randomList = new();
 
-        int NewRandomNumber(int bound, int diameter)
-        {
-            new_number = random.Next(0, bound - diameter);
+		public Form1()
+		{
+			InitializeComponent();
+		}
 
-            if (!randomList.Contains(new_number))
-            {
-                randomList.Add(new_number);
-                return new_number;
-            }
-            return 0;
-        }
-    }
-    
-    public static class SaveExt
-    {
-        public static void Image(Bitmap bitmap)
-        {
-            string desktop = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Выборка";
-            int i = 0, filenum = 0;
-            do
-            {
-                filenum += 1;
-                i++;
-            } while (File.Exists(@$"{desktop}\{i}.png"));
+		private void Form1_Load(object sender, EventArgs e)
+		{
+			//размер полотна
+			const int width = 800;
+			const int height = width;
+			//количество кругов
+			const int circlesAmount = 200;
+			//радиус кругов
+			var diameter = random.Next(10, 40);
+			//количество картинок для генерации
+			const int picNum = 1;
 
-            if (Directory.Exists(desktop) == false)
-            {
-                Directory.CreateDirectory(desktop);
-                bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
-            }
-            else
-            {
-                bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
-            }
-        }
-    }
+			//генерация картинок
+			for (var i = 0; i < picNum; i++)
+			{
+				var bitmap = new Bitmap(width, height);
+				//генерация кругов
+				for (var ii = 0; ii < circlesAmount; ii++)
+				{
+					using var gr = Graphics.FromImage(bitmap);
+					var randX = NewRandomNumber(width, diameter) == 0
+						? NewRandomNumber(width, diameter)
+						: newNumber;
+					var randY = NewRandomNumber(width, diameter) == 0
+						? NewRandomNumber(width, diameter)
+						: newNumber;
+					if (CheckOverlap(diameter, randX, randY))
+						gr.FillEllipse(Brushes.Black, randX, randY, diameter, diameter);
+				}
+
+				SaveExt.Image(bitmap);
+				listX.Clear();
+				listY.Clear();
+				randomList.Clear();
+			}
+
+			Close();
+		}
+
+		private bool CheckOverlap(int diameter, int randX, int randY)
+		{
+			for (var i = 0; i < listX.Count; i++)
+			{
+				var otherX = listX[i];
+				var otherY = listY[i];
+				var rect1 = new Rectangle(randX, randY, diameter, diameter);
+				var rect2 = new Rectangle(otherX, otherY, diameter, diameter);
+
+				if (rect1.IntersectsWith(rect2)) return false;
+			}
+
+			listX.Add(randX);
+			listY.Add(randY);
+			return true;
+		}
+
+		private int NewRandomNumber(int bound, int diameter)
+		{
+			if (randomList.Count == bound - diameter)
+				throw new ArgumentOutOfRangeException("Использованный костыль не позволяет генерировать более чем " +
+				                                      ((bound - diameter) / 2 - 1) + " кругов");
+			do
+			{
+				newNumber = random.Next(0, bound - diameter);
+			} while (randomList.Contains(newNumber));
+
+			randomList.Add(newNumber);
+			return newNumber;
+		}
+	}
+
+	public static class SaveExt
+	{
+		// очищать предыдущие сгенерированные круги
+		private const bool ClearDirectory = true;
+
+		public static void Image(Bitmap bitmap)
+		{
+			var desktop = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Круги";
+			var filenum = 1;
+			while (File.Exists(@$"{desktop}\{filenum}.png"))
+			{
+				if (ClearDirectory) File.Delete(@$"{desktop}\{filenum}.png");
+				filenum++;
+			}
+
+			if (ClearDirectory) filenum = 1;
+			if (!Directory.Exists(desktop)) Directory.CreateDirectory(desktop);
+			bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
+		}
+	}
 }
