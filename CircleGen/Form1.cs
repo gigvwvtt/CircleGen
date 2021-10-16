@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace CircleGen
@@ -15,6 +17,8 @@ namespace CircleGen
 
 		private readonly Random random = new();
 		private readonly List<int> randomList = new();
+
+		private readonly List<int> diameters = new();
 
 		public Form1()
 		{
@@ -33,8 +37,8 @@ namespace CircleGen
 			//количество картинок для генерации
 			const int picNum = 10;
 
-			Font drawFont = new Font("Arial", 16);
-			SolidBrush drawBrush = new SolidBrush(Color.Red);
+			var drawFont = new Font("Arial", 14);
+			var drawBrush = new SolidBrush(Color.Red);
 
 			//генерация картинок
 			for (var i = 0; i < picNum; i++)
@@ -47,16 +51,14 @@ namespace CircleGen
 					using var gr = Graphics.FromImage(bitmap);
 					var randX = NewRandomNumber(width, diameter);
 					var randY = NewRandomNumber(width, diameter);
-					if (!CheckOverlap(diameter, randX, randY))
-					{
-
-						gr.FillEllipse(Brushes.Black, randX, randY, diameter, diameter);
-						gr.DrawString(diameter.ToString(), drawFont, drawBrush, randX, randY);
-
-					}
+					if (CheckOverlap(diameter, randX, randY)) continue;
+					gr.FillEllipse(Brushes.Black, randX, randY, diameter, diameter);
+					gr.DrawString(diameter.ToString(), drawFont, drawBrush, randX, randY);
+					diameters.Add(diameter);
 				}
 
 				SaveExt.Image(bitmap);
+				SaveExt.Csv(diameters, isColumn: true);
 				listX.Clear();
 				listY.Clear();
 				randomList.Clear();
@@ -99,23 +101,39 @@ namespace CircleGen
 
 	public static class SaveExt
 	{
+		// каталог для сохранения
+		private static readonly string Directory = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Круги";
 		// очищать предыдущие сгенерированные круги
 		private static bool clearDirectory = true;
 
 		public static void Image(Bitmap bitmap)
 		{
-			var desktop = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Круги";
+			var filenum = GetFileNumber("png");
+			bitmap.Save(@$"{Directory}\{filenum}.png", ImageFormat.Png);
+		}
+
+		public static void Csv<T>(IEnumerable<T> values, bool isColumn)
+		{
+			var fileNamePrefix = "diam";
+			var filenum = GetFileNumber("csv", fileNamePrefix);
+			var separator = isColumn ? "\n" : ";";
+			var csvData = string.Join(separator, values);
+			File.WriteAllText(@$"{Directory}\{fileNamePrefix}{filenum}.csv", csvData);
+		}
+
+		private static int GetFileNumber(string extension, string prefix = "")
+		{
 			var filenum = 1;
-			while (File.Exists(@$"{desktop}\{filenum}.png"))
+			while (File.Exists(@$"{Directory}\{prefix}{filenum}.{extension}"))
 			{
-				if (clearDirectory) File.Delete(@$"{desktop}\{filenum}.png");
+				if (clearDirectory) File.Delete(@$"{Directory}\{prefix}{filenum}.{extension}");
 				filenum++;
 			}
 
 			if (clearDirectory) filenum = 1;
 			clearDirectory = false;
-			if (!Directory.Exists(desktop)) Directory.CreateDirectory(desktop);
-			bitmap.Save(@$"{desktop}\{filenum}.png", ImageFormat.Png);
+			if (!System.IO.Directory.Exists(Directory)) System.IO.Directory.CreateDirectory(Directory);
+			return filenum;
 		}
 	}
 }
