@@ -27,11 +27,14 @@ namespace CircleGen
 			const int width = 800;
 			const int height = width;
 			//количество кругов
-			const int circlesAmount = 300;
+			const int circlesAmount = 30;
 			//радиус кругов
-			var diameter = random.Next(10, 40);
+			
 			//количество картинок для генерации
 			const int picNum = 10;
+
+			Font drawFont = new Font("Arial", 16);
+			SolidBrush drawBrush = new SolidBrush(Color.Red);
 
 			//генерация картинок
 			for (var i = 0; i < picNum; i++)
@@ -40,11 +43,17 @@ namespace CircleGen
 				//генерация кругов
 				for (var ii = 0; ii < circlesAmount; ii++)
 				{
+					var diameter = random.Next(10, 80);
 					using var gr = Graphics.FromImage(bitmap);
 					var randX = NewRandomNumber(width, diameter);
 					var randY = NewRandomNumber(width, diameter);
 					if (!CheckOverlap(diameter, randX, randY))
+					{
+
 						gr.FillEllipse(Brushes.Black, randX, randY, diameter, diameter);
+						gr.DrawString(diameter.ToString(), drawFont, drawBrush, randX, randY);
+
+					}
 				}
 
 				SaveExt.Image(bitmap);
