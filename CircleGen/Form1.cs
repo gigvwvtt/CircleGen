@@ -32,12 +32,19 @@ namespace CircleGen
 			const int height = width;
 			//количество кругов
 			const int circlesAmount = 30;
-			//радиус кругов
 			
 			//количество картинок для генерации
 			const int picNum = 10;
 
-			var drawFont = new Font("Arial", 14);
+			//очистка директории
+			string Directory = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Круги";
+            DirectoryInfo di = new DirectoryInfo(Directory);
+            foreach (var file in di?.GetFiles())
+            {
+                file?.Delete();
+            }
+			
+            var drawFont = new Font("Arial", 14);
 			var drawBrush = new SolidBrush(Color.Red);
 
 			//генерация картинок
@@ -47,6 +54,7 @@ namespace CircleGen
 				//генерация кругов
 				for (var ii = 0; ii < circlesAmount; ii++)
 				{
+                    //радиус кругов
 					var diameter = random.Next(10, 80);
 					using var gr = Graphics.FromImage(bitmap);
 					var randX = NewRandomNumber(width, diameter);
@@ -119,14 +127,13 @@ namespace CircleGen
 			var separator = isColumn ? "\n" : ";";
 			var csvData = string.Join(separator, values);
 			File.WriteAllText(@$"{Directory}\{fileNamePrefix}{filenum}.csv", csvData);
-		}
+        }
 
 		private static int GetFileNumber(string extension, string prefix = "")
 		{
 			var filenum = 1;
 			while (File.Exists(@$"{Directory}\{prefix}{filenum}.{extension}"))
 			{
-				if (clearDirectory) File.Delete(@$"{Directory}\{prefix}{filenum}.{extension}");
 				filenum++;
 			}
 
