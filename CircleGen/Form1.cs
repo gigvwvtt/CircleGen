@@ -28,7 +28,7 @@ namespace CircleGen
 		private void Form1_Load(object sender, EventArgs e)
 		{
 			//размер полотна
-			const int width = 800;
+			const int width = 512;
 			const int height = width;
 			//количество кругов
 			const int circlesAmount = 30;
@@ -36,14 +36,20 @@ namespace CircleGen
 			//количество картинок для генерации
 			const int picNum = 10;
 
+			//проверка на наличие директории
+			string Directory = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}";
+			if (!System.IO.Directory.Exists(@$"{Directory}\Круги"))
+            {
+				System.IO.Directory.CreateDirectory(@$"{Directory}\Круги");
+			}
+			Directory = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Круги";
 			//очистка директории
-			string Directory = @$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\Круги";
-            DirectoryInfo di = new DirectoryInfo(Directory);
+			DirectoryInfo di = new DirectoryInfo(Directory);
             foreach (var file in di?.GetFiles())
             {
                 file?.Delete();
-            }
-			
+			}
+
             var drawFont = new Font("Arial", 14);
 			var drawBrush = new SolidBrush(Color.Red);
 
@@ -83,7 +89,6 @@ namespace CircleGen
 				var otherY = listY[i];
 				var rect1 = new Rectangle(randX, randY, diameter, diameter);
 				var rect2 = new Rectangle(otherX, otherY, diameter, diameter);
-
 				if (rect1.IntersectsWith(rect2)) return true;
 			}
 
@@ -120,14 +125,15 @@ namespace CircleGen
 			bitmap.Save(@$"{Directory}\{filenum}.png", ImageFormat.Png);
 		}
 
-		public static void Csv<T>(IEnumerable<T> values, bool isColumn)
+		public static void Csv<T>(List<T> values, bool isColumn)
 		{
 			var fileNamePrefix = "diam";
 			var filenum = GetFileNumber("csv", fileNamePrefix);
 			var separator = isColumn ? "\n" : ";";
 			var csvData = string.Join(separator, values);
 			File.WriteAllText(@$"{Directory}\{fileNamePrefix}{filenum}.csv", csvData);
-        }
+			values.Clear();
+		}
 
 		private static int GetFileNumber(string extension, string prefix = "")
 		{
@@ -139,7 +145,6 @@ namespace CircleGen
 
 			if (clearDirectory) filenum = 1;
 			clearDirectory = false;
-			if (!System.IO.Directory.Exists(Directory)) System.IO.Directory.CreateDirectory(Directory);
 			return filenum;
 		}
 	}
